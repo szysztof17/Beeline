@@ -117,6 +117,16 @@ def PRROC(dataDict, inputSettings, directed = True, selfEdges = False, plotFlag 
         plt.clf()
     return AUPRC, AUROC
 
+
+def sort_Gene1_Gene2(df):
+    df['minGene'] = df[['Gene1', 'Gene2']].min(axis=1)
+    df['maxGene'] = df[['Gene1', 'Gene2']].max(axis=1)
+    df['Gene1'] = df['minGene']
+    df['Gene2'] = df['maxGene']
+    df = df.drop(columns=['minGene', 'maxGene'])
+    return df
+
+
 def computeScores(trueEdgesDF, predEdgeDF, 
                   directed = True, selfEdges = True):
     '''        
@@ -145,75 +155,41 @@ def computeScores(trueEdgesDF, predEdgeDF,
             - AUROC: Area under the ROC curve
     '''
 
-    if directed:        
-        # Initialize dictionaries with all 
-        # possible edges
-        if selfEdges:
-            possibleEdges = list(product(np.unique(trueEdgesDF.loc[:,['Gene1','Gene2']]),
-                                         repeat = 2))
-        else:
-            possibleEdges = list(permutations(np.unique(trueEdgesDF.loc[:,['Gene1','Gene2']]),
-                                         r = 2))
-        
-        TrueEdgeDict = {'|'.join(p):0 for p in possibleEdges}
-        PredEdgeDict = {'|'.join(p):0 for p in possibleEdges}
-        
-        # Compute TrueEdgeDict Dictionary
-        # 1 if edge is present in the ground-truth
-        # 0 if edge is not present in the ground-truth
-        for key in TrueEdgeDict.keys():
-            if len(trueEdgesDF.loc[(trueEdgesDF['Gene1'] == key.split('|')[0]) &
-                   (trueEdgesDF['Gene2'] == key.split('|')[1])])>0:
-                    TrueEdgeDict[key] = 1
-                
-        for key in PredEdgeDict.keys():
-            subDF = predEdgeDF.loc[(predEdgeDF['Gene1'] == key.split('|')[0]) &
-                               (predEdgeDF['Gene2'] == key.split('|')[1])]
-            if len(subDF)>0:
-                PredEdgeDict[key] = np.abs(subDF.EdgeWeight.values[0])
+    # get unique gene names from ground-truth network
+    unique_genes = np.unique(trueEdgesDF.loc[:, ['Gene1', 'Gene2']])
 
-    # if undirected
+    # generate all posible edges depending on parameters
+    if directed:
+        edge_generator = product(unique_genes, repeat=2) if selfEdges else permutations(unique_genes, r=2)
     else:
-        
-        # Initialize dictionaries with all 
-        # possible edges
-        if selfEdges:
-            possibleEdges = list(combinations_with_replacement(np.unique(trueEdgesDF.loc[:,['Gene1','Gene2']]),
-                                                               r = 2))
-        else:
-            possibleEdges = list(combinations(np.unique(trueEdgesDF.loc[:,['Gene1','Gene2']]),
-                                                               r = 2))
-        TrueEdgeDict = {'|'.join(p):0 for p in possibleEdges}
-        PredEdgeDict = {'|'.join(p):0 for p in possibleEdges}
+        edge_generator = combinations_with_replacement(unique_genes, r=2) if selfEdges else combinations(unique_genes, r=2)
 
-        # Compute TrueEdgeDict Dictionary
-        # 1 if edge is present in the ground-truth
-        # 0 if edge is not present in the ground-truth
+    outDF = pd.DataFrame.from_records(edge_generator, columns = ['Gene1', 'Gene2'])
+    if not directed:
+        outDF = sort_Gene1_Gene2(outDF)
 
-        for key in TrueEdgeDict.keys():
-            if len(trueEdgesDF.loc[((trueEdgesDF['Gene1'] == key.split('|')[0]) &
-                           (trueEdgesDF['Gene2'] == key.split('|')[1])) |
-                              ((trueEdgesDF['Gene2'] == key.split('|')[0]) &
-                           (trueEdgesDF['Gene1'] == key.split('|')[1]))]) > 0:
-                TrueEdgeDict[key] = 1  
+    teDF = trueEdgesDF[['Gene1', 'Gene2']]
+    if not directed:
+        teDF = sort_Gene1_Gene2(teDF)
+    # these true edges should have no duplicates if directed==True, but let's be on the safe side here
+    teDF = teDF.drop_duplicates()
+    teDF['TrueEdges'] = 1
 
-        # Compute PredEdgeDict Dictionary
-        # from predEdgeDF
+    outDF = pd.merge(outDF, teDF, on = ['Gene1', 'Gene2'], how='left', validate='one_to_one')
+    outDF['TrueEdges'].fillna(0, inplace = True)
 
-        for key in PredEdgeDict.keys():
-            subDF = predEdgeDF.loc[((predEdgeDF['Gene1'] == key.split('|')[0]) &
-                               (predEdgeDF['Gene2'] == key.split('|')[1])) |
-                              ((predEdgeDF['Gene2'] == key.split('|')[0]) &
-                               (predEdgeDF['Gene1'] == key.split('|')[1]))]
-            if len(subDF)>0:
-                PredEdgeDict[key] = max(np.abs(subDF.EdgeWeight.values))
+    peDF = predEdgeDF[['Gene1', 'Gene2', 'EdgeWeight']]
+    # use the absolute value of the predicted edge weight
+    peDF['PredEdges'] = abs(peDF['EdgeWeight'])
+    if not directed:
+        peDF = sort_Gene1_Gene2(peDF)
 
-                
-                
-    # Combine into one dataframe
-    # to pass it to sklearn
-    outDF = pd.DataFrame([TrueEdgeDict,PredEdgeDict]).T
-    outDF.columns = ['TrueEdges','PredEdges']
+    #peDF = peDF.groupby(level=0)['PredEdges'].max().to_frame()    
+    peDF = peDF.groupby(['Gene1', 'Gene2']).agg({'PredEdges': 'max'})
+
+    outDF = pd.merge(outDF, peDF, on = ['Gene1', 'Gene2'], how='left', validate='one_to_one')
+    outDF['PredEdges'].fillna(0, inplace = True)
+
     prroc = importr('PRROC')
     prCurve = prroc.pr_curve(scores_class0 = FloatVector(list(outDF['PredEdges'].values)), 
               weights_class0 = FloatVector(list(outDF['TrueEdges'].values)))
