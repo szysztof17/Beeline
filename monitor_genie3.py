@@ -5,7 +5,9 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import getpass
 
+
 CURRENT_USER = getpass.getuser()
+## 
 BEELINE_OUTPUT_ROOT = "/home/kl467102/thesis/BEELINE/outputs/pbmc10k_meta"
 TARGET_SUBDIRS = ["GENIE3", "GRNBOOST2"]
 TARGET_FILENAME = "outFile.txt"
