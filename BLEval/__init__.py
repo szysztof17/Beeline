@@ -31,7 +31,7 @@ from networkx.convert_matrix import from_pandas_adjacency
 
 # local imports
 from BLEval.parseTime import getTime
-from BLEval.computeDGAUC import PRROC
+from BLEval.computeDGAUC_OURS import PRROC
 from BLEval.computeBorda import Borda
 from BLEval.computeJaccard import Jaccard
 from BLEval.computeSpearman import Spearman
@@ -120,18 +120,29 @@ class BLEval(object):
         '''
         AUPRCDict = {}
         AUROCDict = {}
-
+        AUPRC_RATIODict = {}
         for dataset in tqdm(self.input_settings.datasets, 
                             total = len(self.input_settings.datasets), unit = " Datasets"):
             
-            AUPRC, AUROC = PRROC(dataset, self.input_settings, 
-                                    directed = directed, selfEdges = False, plotFlag = False)
+            AUPRC, AUROC, AUPRC_RATIO = PRROC(dataset, self.input_settings, 
+
+                                directed=directed, selfEdges=False, plotFlag=False)
+
             AUPRCDict[dataset['name']] = AUPRC
+
             AUROCDict[dataset['name']] = AUROC
+
+            AUPRC_RATIODict[dataset['name']] = AUPRC_RATIO  
+
+
+
         AUPRC = pd.DataFrame(AUPRCDict)
+
         AUROC = pd.DataFrame(AUROCDict)
-        return AUPRC, AUROC
-    
+
+        AUPRC_RATIO = pd.DataFrame(AUPRC_RATIODict)
+
+        return AUPRC, AUROC, AUPRC_RATIO
 
     def parseTime(self):
         """

@@ -95,10 +95,11 @@ def main():
     if (opts.auc):
         print('\n\nComputing areas under ROC and PR curves...')
 
-        AUPRC, AUROC = evalSummarizer.computeAUC()
+        AUPRC, AUROC, AUPRC_RATIO = evalSummarizer.computeAUC()
         AUPRC.to_csv(outDir+'AUPRC.csv')
         AUROC.to_csv(outDir+'AUROC.csv')
-    
+        AUPRC_RATIO.to_csv(outDir+'AUPRCRatio.csv')
+        
     # Compute Jaccard index    
     if (opts.jaccard):
         print('\n\nComputing Jaccard index...')

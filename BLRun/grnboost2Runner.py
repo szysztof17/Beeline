@@ -33,7 +33,7 @@ def run(RunnerObj):
 
     
     outPath = "data/" +  str(outDir) + 'outFile.txt'
-    cmdToRun = ' '.join(['docker run --rm -v', str(Path.cwd())+':/data/ --expose=41269', 
+    cmdToRun = ' '.join(['podman run --rm -v', str(Path.cwd())+':/data/ --expose=41269', 
                          'grnbeeline/arboreto:base /bin/sh -c \"time -v -o', "data/" + str(outDir) + 'time.txt', 
                          'python runArboreto.py --algo=GRNBoost2',
                          '--inFile='+inputPath, '--outFile='+outPath, '\"'])

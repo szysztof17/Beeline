@@ -69,7 +69,7 @@ def run(RunnerObj):
 
         os.makedirs(outDir+str(idx), exist_ok = True)
 
-        cmdToRun = ' '.join(['docker run --rm -v', 
+        cmdToRun = ' '.join(['podman run --rm -v', 
                              str(Path.cwd())+':/SCODE/data/  grnbeeline/scode:base /bin/sh -c \"time -v -o',
                              "data/" + str(outDir) + 'time'+str(idx)+'.txt', 'ruby run_R.rb',
                             inputPath +'ExpressionData'+str(idx)+'.csv', 

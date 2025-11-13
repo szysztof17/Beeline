@@ -107,7 +107,7 @@ def run(RunnerObj):
                              'f = fopen(\'' + inputFile + '\'); gene_list = strsplit(fgetl(f), \',\')(1:end-1).\'; fclose(f); ' + \
                              'save(\'-v7\',\'' + geneListMat + '\', \'gene_list\')\\"'
 
-        cmdToRun = ' '.join(['docker run --rm --entrypoint /bin/sh -v', 
+        cmdToRun = ' '.join(['podman run --rm --entrypoint /bin/sh -v', 
                              str(Path.cwd())+':/usr/local/SINGE/data/ grnbeeline/singe:0.4.1 -c \"echo \\"',
                              params_str, '\\" >', paramsFile, '&&', symlink_out_file, '&&', convert_input_to_matfile,
                              '&& time -v -o', "data/" + str(outDir) + 'time'+str(idx)+'.txt',

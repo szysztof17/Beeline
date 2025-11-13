@@ -59,7 +59,7 @@ def run(RunnerObj):
         exprName = "/GRNVBEM/ExpressionData"+str(idx)+".csv"
         outPath = 'data/' +  str(outDir) + 'outFile'+str(idx)+'.txt'
 
-        cmdToRun = ' '.join(['docker run --rm -v', 
+        cmdToRun = ' '.join(['podman run --rm -v', 
                              str(Path.cwd())+':/VBEM/data/ grnbeeline/grnvbem:base /bin/sh -c \"time -v -o', 
                              "data/" + str(outDir) + 'time'+str(idx)+'.txt', 
                              './GRNVBEM', inputPath+exprName, outPath, '\"'])

@@ -61,7 +61,7 @@ def run(RunnerObj):
         outPath = 'data/' +  str(outDir) + 'outFile'+str(idx)+'.txt'
 
        
-        cmdToRun = ' '.join(['docker run --rm -v', 
+        cmdToRun = ' '.join(['podman run --rm -v', 
                              str(Path.cwd())+':/data/ grnbeeline/leap:base /bin/sh -c \"time -v -o', 
                              'data/' + str(outDir) + 'time'+str(idx)+'.txt', 'Rscript runLeap.R',
                              inputPath+exprName, maxLag, outPath, '\"'])

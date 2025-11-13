@@ -48,7 +48,7 @@ def run(RunnerObj):
     '''
     Function to run SCRIBE algorithm.
     To see all the inputs runScribe.R script takes, run:
-    docker run scribe:base /bin/sh -c "Rscript runScribe.R -h"
+    podman run scribe:base /bin/sh -c "Rscript runScribe.R -h"
     '''
     
     inputPath = "data"+str(RunnerObj.inputDir).split(str(Path.cwd()))[1]+"/SCRIBE/"
@@ -80,7 +80,7 @@ def run(RunnerObj):
         outFile = "outFile"+str(idx)+".csv"
         timeFile = 'time'+str(idx)+".txt"
         
-        cmdToRun = ' '.join(['docker run --rm -v', str(Path.cwd())+':/data/ grnbeeline/scribe:base /bin/sh -c \"time -v -o', "data/" + str(outDir) + timeFile, 'Rscript runScribe.R',
+        cmdToRun = ' '.join(['podman run --rm -v', str(Path.cwd())+':/data/ grnbeeline/scribe:base /bin/sh -c \"time -v -o', "data/" + str(outDir) + timeFile, 'Rscript runScribe.R',
                        '-e',inputPath +exprName, '-c',inputPath + cellName, 
                        '-g',inputPath + 'GeneData.csv', '-o data/'+outDir, '-d',delay, '-l', low,
                        '-m', method, '-x',fam, '--outFile '+outFile])
